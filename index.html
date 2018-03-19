@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="format-detection" content="telephone=no"/>
+    <meta name="format-detection" content="email=no"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0" name="viewport">
+    <title>呼叫</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+  </head>
+  <body>
+    <div id="loginbox">
+      <div style="width:260px;margin:200px auto;">请先输入你的用户名<br/><br/>
+        <input type="text" style="width:180px;" placeholder="请输入用户名" id="username" name="username" />
+        <input type="number" style="width:180px;" placeholder="请输入用户id" id="uid" name="uid" />
+				<input type="button" style="width:50px;" value="提交" onclick="CHAT.usernameSubmit();"/>
+      </div>
+    </div>
+    <div id="chatbox" style="display:none;">
+      <div id="server">
+        <div class="input-box">
+          <div class="input">
+            <input type="text" maxlength="140" placeholder="请输入场内服务内容" id="content" name="content">
+          </div>
+          <div class="action">
+            <button type="button" id="mjr_send" onclick="CHAT.submit();">提交</button>
+            <button type="button" id="mjr_send" onclick="CHAT.logout();">退出</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+      var CHAT = {
+        username:null,
+        socket:null,
+        //退出，本例只是一个简单的刷新
+        logout:function(){
+          this.socket.disconnect();
+          location.reload();
+        },
+        //提交聊天消息内容
+        submit:function(){
+          var content = document.getElementById("content").value;
+          if(content != ''){
+            var obj = {
+              username: this.username,
+              content: content
+            };
+            this.socket.emit('message', obj);
+            document.getElementById("content").value = '';
+          }
+          return false;
+        },
+        //第一个界面用户提交用户名
+        usernameSubmit:function(){
+          var username = document.getElementById("username").value;
+          var uid = document.getElementById("uid").value;
+          if(username != ""){
+            document.getElementById("username").value = '';
+            document.getElementById("uid").value = '';
+            document.getElementById("loginbox").style.display = 'none';
+            document.getElementById("chatbox").style.display = 'block';
+            this.init(username,uid);
+          }
+          return false;
+        },
+        init:function(username,uid){
+          this.username = username;
+          this.uid = uid;
+          //连接websocket后端服务器
+          this.socket = io.connect('http://127.0.0.1:3000');
+          //告诉服务器端有用户登录
+          this.socket.emit('login', { username:this.username , uid: this.uid });
+          this.socket.on('login', function(obj){
+            window.alert('login');
+          });
+          //监听消息发送
+          this.socket.on('message', function(obj){
+            window.alert(obj.content);
+          });
+        }
+      };
+    </script>
+  </body>
+</html>
